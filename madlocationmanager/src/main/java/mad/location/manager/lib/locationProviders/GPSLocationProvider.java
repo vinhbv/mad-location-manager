@@ -52,7 +52,6 @@ public class GPSLocationProvider implements LocationListener {
             gpsCallback.gpsSatelliteCountChanged(gpsSatteliteCount);
         }
     };
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final GpsStatus.Listener gpsListener = new GpsStatus.Listener() {
 
         @Override
@@ -73,8 +72,7 @@ public class GPSLocationProvider implements LocationListener {
             }
         }
     };
-    @RequiresApi(Build.VERSION_CODES.N)
-    private final GnssStatus.Callback gnssStatus = new GnssStatus.Callback() {
+    private final GnssStatus.Callback gnssStatus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? new GnssStatus.Callback() {
         /**
          * Called periodically to report GNSS satellite status.
          *
@@ -88,7 +86,7 @@ public class GPSLocationProvider implements LocationListener {
             msg.setData(bundle);
             mHandler.sendMessage(msg);
         }
-    };
+    } : null;
 
     public GPSLocationProvider(Context context, LocationProviderCallback locationProviderCallback, GPSCallback gpsCallback) {
         m_locationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);
@@ -101,7 +99,7 @@ public class GPSLocationProvider implements LocationListener {
     public void startLocationUpdates(Settings m_settings, HandlerThread thread) {
         m_locationManager.removeGpsStatusListener(gpsListener);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            m_locationManager.registerGnssStatusCallback(executorService, gnssStatus);
+            m_locationManager.registerGnssStatusCallback(gnssStatus);
         } else {
             m_locationManager.addGpsStatusListener(gpsListener);
         }
